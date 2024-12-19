@@ -5,6 +5,10 @@ using Orange.Sql.Tool.Database;
 using Orange.Sql.Tool.Users;
 using Serilog;
 
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
 var builder = CoconaApp.CreateBuilder();
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
@@ -19,3 +23,7 @@ builder.Host.UseSerilog((hostContext, loggerConfiguration) => loggerConfiguratio
 );
 
 var app = builder.Build();
+
+app.AddCommands<UserInfoCommands>();
+
+app.Run();
