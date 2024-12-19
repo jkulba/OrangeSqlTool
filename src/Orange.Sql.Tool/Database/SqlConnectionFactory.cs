@@ -4,14 +4,12 @@ using Microsoft.Extensions.Configuration;
 
 namespace Orange.Sql.Tool.Database;
 
-internal sealed class SqlConnectionFactory(IConfiguration configuration) : ISqlConnectionFactory
+internal sealed class SqlConnectionFactory(string connectionString) : ISqlConnectionFactory
 {
-    private readonly IConfiguration _configuration = configuration;
-
-    public async Task<IDbConnection> CreateConnectionAsync()
+    public async Task<IDbConnection> CreateConnectionAsync(CancellationToken cancellationToken)
     {
-        var connection = new SqlConnection(_configuration.GetConnectionString("SqlConnectionString"));
-        await connection.OpenAsync();
+        var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
         return connection;
     }
 }
