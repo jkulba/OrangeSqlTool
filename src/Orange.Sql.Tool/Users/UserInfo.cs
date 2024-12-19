@@ -1,6 +1,6 @@
 namespace Orange.Sql.Tool.Users;
 
-public class UserInfo
+public record UserInfo
 {
     public Guid UserId { get; set; }
     public required string EmployeeNum { get; set; }

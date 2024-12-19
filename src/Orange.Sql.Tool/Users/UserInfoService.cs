@@ -1,5 +1,4 @@
 using Dapper;
-using FluentValidation;
 using Orange.Sql.Tool.Database;
 using Orange.Sql.Tool.Validation;
 
@@ -16,13 +15,11 @@ public interface IUserInfoService
 }
 public class UserInfoService : IUserInfoService
 {
-    private readonly IValidator<UserInfo> _validator;
     private readonly IDbConnectionFactory _connectionFactory;
 
-    public UserInfoService(IValidator<UserInfo> validator, IDbConnectionFactory connectionFactory)
+    public UserInfoService(IDbConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
-        _validator = validator;
     }
 
     /// <summary>
@@ -55,12 +52,7 @@ public class UserInfoService : IUserInfoService
     /// <returns>Orange.Sql.Tool.Users.UserInfo</returns>
     public async Task<Result<UserInfo, ValidationFailed>> CreateUserAsync(UserInfo user)
     {
-        var validationResult = await _validator.ValidateAsync(user);
-        if (!validationResult.IsValid)
-        {
-            return new ValidationFailed(validationResult.Errors);
-        }
-        
+
         using var dbConnection = await _connectionFactory.CreateConnectionAsync();
         await dbConnection.ExecuteAsync(
             """
@@ -78,25 +70,20 @@ public class UserInfoService : IUserInfoService
     /// <returns>Orange.Sql.Tool.Users.UserInfo</returns>
     public async Task<Result<UserInfo?, ValidationFailed>> UpdateUserAsync(UserInfo user)
     {
-        var validationResult = await _validator.ValidateAsync(user);
-        if (!validationResult.IsValid)
-        {
-            return new ValidationFailed(validationResult.Errors);
-        }
 
         var existingUser = await GetUserByIdAsync(user.UserId);
         if (existingUser is null)
         {
             return default(UserInfo);
         }
-        
+
         using var dbConnection = await _connectionFactory.CreateConnectionAsync();
         await dbConnection.ExecuteAsync(
             """
             UPDATE users SET EmployeeNum=@EmployeeNum, FirstName=@FirstName, LastName=@LastName, Email=@Email, UtcUpdatedAt=@UtcCreatedAt, UpdatedBy=@UpdatedBy, IsEnabled=@IsEnabled
             WHERE UserId = @UserId
             """, user);
-        
+
         return user;
     }
 
@@ -107,8 +94,8 @@ public class UserInfoService : IUserInfoService
     /// <returns>boolean</returns>
     public async Task<bool> DeleteUserByIdAsync(Guid id)
     {
-        using var dbConnection = await _connectionFactory.CreateConnectionAsync(); 
-        var result = await dbConnection.ExecuteAsync("DELETE FROM users where UserId = @id", new { id }); 
+        using var dbConnection = await _connectionFactory.CreateConnectionAsync();
+        var result = await dbConnection.ExecuteAsync("DELETE FROM users where UserId = @id", new { id });
         return result > 0;
     }
 }
