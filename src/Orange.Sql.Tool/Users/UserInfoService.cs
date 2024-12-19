@@ -38,12 +38,21 @@ public class UserInfoService : IUserInfoService
         return userInfo;
     }
 
+    /// <summary>
+    /// Method used to get all the UserInfo from the Users table.
+    /// </summary>
+    /// <returns>IEnumerable of UserInfo</returns>
     public async Task<IEnumerable<UserInfo?>> GetAllUsersAsync()
     {
         using var dbConnection = await _connectionFactory.CreateConnectionAsync();
         return await dbConnection.QueryAsync<UserInfo>("SELECT * FROM users");
     }
 
+    /// <summary>
+    /// Method used to create new UserInfo in Users table.
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns>Orange.Sql.Tool.Users.UserInfo</returns>
     public async Task<Result<UserInfo, ValidationFailed>> CreateUserAsync(UserInfo user)
     {
         var validationResult = await _validator.ValidateAsync(user);
@@ -62,6 +71,11 @@ public class UserInfoService : IUserInfoService
         return user;
     }
 
+    /// <summary>
+    /// Method used to update a single UserInfo in the Users table.
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns>Orange.Sql.Tool.Users.UserInfo</returns>
     public async Task<Result<UserInfo?, ValidationFailed>> UpdateUserAsync(UserInfo user)
     {
         var validationResult = await _validator.ValidateAsync(user);
@@ -79,13 +93,18 @@ public class UserInfoService : IUserInfoService
         using var dbConnection = await _connectionFactory.CreateConnectionAsync();
         await dbConnection.ExecuteAsync(
             """
-            UPDATE users SET EmployeeNum=@EmployeeNum, FirstName=@FirstName, LastName=@LastName, Email=@Email, UtcUpdatedAt=@UtcCreatedAt, UpdatedByy=@UpdatedBy, IsEnabled=@IsEnabled
+            UPDATE users SET EmployeeNum=@EmployeeNum, FirstName=@FirstName, LastName=@LastName, Email=@Email, UtcUpdatedAt=@UtcCreatedAt, UpdatedBy=@UpdatedBy, IsEnabled=@IsEnabled
             WHERE UserId = @UserId
             """, user);
         
         return user;
     }
 
+    /// <summary>
+    /// Method used to remove UserInfo from Users table.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns>boolean</returns>
     public async Task<bool> DeleteUserByIdAsync(Guid id)
     {
         using var dbConnection = await _connectionFactory.CreateConnectionAsync(); 
