@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="Cocona" Version="2.2.0" />
+        <PackageReference Include="ConsoleTables" Version="2.6.2" />
         <PackageReference Include="Dapper" Version="2.1.35" />
         <PackageReference Include="FluentValidation" Version="11.11.0" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />

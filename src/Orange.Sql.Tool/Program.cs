@@ -1,4 +1,6 @@
 ﻿using Cocona;
+using ConsoleTables;
+using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orange.Sql.Tool.Database;
@@ -35,16 +37,12 @@ app.AddCommand("create", () => Console.WriteLine("Creating a new user...")).With
 app.AddCommand("get", () => Console.WriteLine("Getting user By Id...")).WithDescription("Get UserInfo by Id");
 // app.AddCommand("list", () => Console.WriteLine("List all users...")).WithDescription("List all users");
 
-app.AddCommand("list", async (IUserInfoService UserInfoService) =>
+app.AddCommand("list", async (IUserInfoService userInfoService) =>
 {
-    var users = await UserInfoService.GetAllUsersAsync();
-    foreach (var user in users)
-    {
-        if (user != null)
-        {
-            Console.WriteLine(user.ToString());
-        }
-    }
+    var users = await userInfoService.GetAllUsersAsync();
+    var table = ConsoleTable.From(users.AsList()).ToString();
+    Console.WriteLine(table);
+    
 }).WithDescription("List all users");
 
 app.AddCommand("delete", () => Console.WriteLine("Deleting user...")).WithDescription("Delete a user");
