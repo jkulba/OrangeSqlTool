@@ -108,14 +108,12 @@ public class UserInfoService : IUserInfoService
     /// <returns>Orange.Sql.Tool.Users.UserInfo</returns>
     public async Task<Result<UserInfo, ValidationFailed>> CreateUserAsync(UserInfo user)
     {
+        var userInfoValidator = new UserInfoValidator();
+        await userInfoValidator.ValidateAndThrowAsync(user);  // Any validation errors will return with a list of errors.
         
-        var validationResult = await _validator.ValidateAsync(user);
-        if (!validationResult.IsValid)
-        {
-            return new ValidationFailed(validationResult.Errors);
-        }
-
         using var dbConnection = await _connectionFactory.CreateConnectionAsync();
+        
+        user.UtcCreatedAt = DateTime.UtcNow;
         
         var cmd = dbConnection.SqlBuilder(
             $@" INSERT INTO users (EmployeeNum, FirstName, LastName, Email, UtcCreatedAt, CreatedBy, IsEnabled) 
@@ -145,6 +143,8 @@ public class UserInfoService : IUserInfoService
         {
             return default(UserInfo);
         }
+        
+        user.UtcUpdatedAt = DateTime.UtcNow;
 
         using var dbConnection = await _connectionFactory.CreateConnectionAsync();
         await dbConnection.ExecuteAsync(
@@ -164,8 +164,11 @@ public class UserInfoService : IUserInfoService
     public async Task<bool> DeleteUserByIdAsync(Guid id)
     {
         using var dbConnection = await _connectionFactory.CreateConnectionAsync();
-        var result = await dbConnection.ExecuteAsync("DELETE FROM users where UserId = @id", new { id });
-        return result > 0;
+        
+        var cmd = dbConnection.SqlBuilder($"DELETE FROM Orders WHERE UserId = {id};");
+        var deletedRows = await cmd.ExecuteAsync();
+        
+        return deletedRows > 0;
     }
 }
 

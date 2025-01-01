@@ -69,14 +69,13 @@ app.AddCommand("delete", async (Guid userId, IUserInfoService userInfoService) =
     Console.WriteLine(!success ? "User not found" : $"User {userId} successfully deleted");
 }).WithDescription("Delete a user");
 
-app.AddCommand("update", () => Console.WriteLine("Updating user...")).WithDescription("Update a user");
+// app.AddCommand("update", () => Console.WriteLine("Updating user...")).WithDescription("Update a user");
 app.AddCommand("version", () => Console.WriteLine("App version...")).WithDescription("App Version");
 
 app.AddCommand("create-from-file", async (string filePath, IUserInfoService userInfoService) =>
 {
     try
     {
-        // var user = ReadUserFromJsonFile(filePath);
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"The file '{filePath}' was not found.");
@@ -94,15 +93,15 @@ app.AddCommand("create-from-file", async (string filePath, IUserInfoService user
 
         if (result.IsSuccess)
         {
-            UserInfo userInfo = result.GetValueOrDefault();
+            var userInfo = result.GetValueOrDefault();
             Console.WriteLine("User created successfully!");
             Console.WriteLine($"ID: {userInfo.UserId}, Name: {userInfo.FirstName} {userInfo.LastName}");
         }
         else
         {
-            Console.WriteLine("Failed to create user. Validation errors:");
+            Console.WriteLine("Failed to create user:");
             var error = result.GetErrorOrDefault();
-            Console.WriteLine($"Error occurred: {error}");
+            Console.WriteLine($"Error occurred: {error.ToString()}");
         }
     }
     catch (Exception ex)
@@ -111,5 +110,43 @@ app.AddCommand("create-from-file", async (string filePath, IUserInfoService user
     }
 }).WithDescription("Create a new user from a local JSON file.");
 
+app.AddCommand("update-from-file", async (string filePath, IUserInfoService userInfoService) =>
+{
+    try
+    {
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException($"The file '{filePath}' was not found.");
+        }
+        
+        var jsonData = File.ReadAllText(filePath); 
+        var user = JsonSerializer.Deserialize<UserInfo>(jsonData);
+        
+        if (user == null)
+        {
+            throw new InvalidOperationException("The JSON file does not contain a valid UserInfo object.");
+        }
+        
+        var result = await userInfoService.UpdateUserAsync(user);
+
+        if (result.IsSuccess)
+        {
+            var userInfo = result.GetValueOrDefault();
+            Console.WriteLine("User updated successfully!");
+            if (userInfo != null)
+                Console.WriteLine($"ID: {userInfo.UserId}, Name: {userInfo.FirstName} {userInfo.LastName}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to create user:");
+            var error = result.GetErrorOrDefault();
+            Console.WriteLine($"Error occurred: {error.ToString()}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred: {ex.Message}");
+    }
+}).WithDescription("Update an existing user from a local JSON file.");
 
 app.Run();

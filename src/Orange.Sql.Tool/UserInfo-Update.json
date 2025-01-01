@@ -1,12 +1,9 @@
 {
   "UserId": "d5f7e8b0-8a5d-4b7d-a728-4a69ab23456f",
-  "EmployeeNum": "12345",
+  "EmployeeNum": "JD999995",
   "FirstName": "John",
   "LastName": "Doe",
   "Email": "john.doe@example.com",
-  "UtcCreatedAt": "2024-12-31T22:06:00Z",
-  "CreatedBy": "admin",
-  "UtcUpdatedAt": "2024-12-31T22:06:00Z",
-  "UpdatedBy": "admin",
+  "UpdatedBy": "Jim",
   "IsEnabled": true
 }
