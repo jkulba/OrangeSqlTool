@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Orange.Sql.Tool.Database;
 using Orange.Sql.Tool.Users;
 using Serilog;
+using System.Text.Json;
+using FluentValidation;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -15,38 +17,99 @@ var builder = CoconaApp.CreateBuilder();
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
+builder.Host.UseSerilog((hostContext, loggerConfiguration) => loggerConfiguration
+    .ReadFrom.Configuration(hostContext.Configuration)
+);
+
 builder.Services.AddSingleton<IDbConnectionFactory>(_ =>
     new SqlConnectionFactory(builder.Configuration["OrangeSql:ConnectionString"]!));
 
 builder.Services.AddSingleton<IUserInfoService, UserInfoService>();
 
-builder.Host.UseSerilog((hostContext, loggerConfiguration) => loggerConfiguration
-    .ReadFrom.Configuration(hostContext.Configuration)
-);
+builder.Services.AddScoped<IValidator<UserInfo>, UserInfoValidator>();
 
 var app = builder.Build();
 
-// app.AddCommand("weather", async (string city, IWeatherService weatherService) =>
-// {
-//     var weather = await weatherService.GetWeatherForCityAsync(city);
-//     Console.WriteLine(JsonSerializer.Serialize(weather, new JsonSerializerOptions { WriteIndented = true }));
-// });
-
-
-app.AddCommand("create", () => Console.WriteLine("Creating a new user...")).WithDescription("Create a new UserInfo");
-app.AddCommand("get", () => Console.WriteLine("Getting user By Id...")).WithDescription("Get UserInfo by Id");
-// app.AddCommand("list", () => Console.WriteLine("List all users...")).WithDescription("List all users");
-
-app.AddCommand("list", async (IUserInfoService userInfoService) =>
+// app.AddCommand("create", () => Console.WriteLine("Creating a new user...")).WithDescription("Create a new UserInfo");
+app.AddCommand("get",  async (Guid userId, IUserInfoService userInfoService) =>
 {
-    var users = await userInfoService.GetAllUsersAsync();
+    var user = await userInfoService.GetUserByIdAsync(userId);
+    if (user == null)
+    {
+        Console.WriteLine("User not found");
+        return;
+    }
+    else
+    {
+        var table = ConsoleTable.From<UserInfo>([user]);
+        Console.WriteLine(table);
+    }
+    
+}).WithDescription("Get UserInfo by Id");
+
+app.AddCommand("list-by-date-created", async (IUserInfoService userInfoService, SortDirection sort) =>
+{
+    var users = await userInfoService.GetAllUsersSortedByDateCreatedAsync(sort);
     var table = ConsoleTable.From(users.AsList()).ToString();
     Console.WriteLine(table);
-    
-}).WithDescription("List all users");
 
-app.AddCommand("delete", () => Console.WriteLine("Deleting user...")).WithDescription("Delete a user");
+}).WithDescription("Sort users by date created");
+
+app.AddCommand("list-by-lastname", async (IUserInfoService userInfoService, SortDirection sort) =>
+{
+    var users = await userInfoService.GetAllUsersSortedByLastNameAsync(sort);
+    var table = ConsoleTable.From(users.AsList()).ToString();
+    Console.WriteLine(table);
+
+}).WithDescription("Sort users by lastname");
+
+app.AddCommand("delete", async (Guid userId, IUserInfoService userInfoService) =>
+{
+    var success = await userInfoService.DeleteUserByIdAsync(userId);
+    Console.WriteLine(!success ? "User not found" : $"User {userId} successfully deleted");
+}).WithDescription("Delete a user");
+
 app.AddCommand("update", () => Console.WriteLine("Updating user...")).WithDescription("Update a user");
 app.AddCommand("version", () => Console.WriteLine("App version...")).WithDescription("App Version");
+
+app.AddCommand("create-from-file", async (string filePath, IUserInfoService userInfoService) =>
+{
+    try
+    {
+        // var user = ReadUserFromJsonFile(filePath);
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException($"The file '{filePath}' was not found.");
+        }
+        
+        var jsonData = File.ReadAllText(filePath); 
+        var user = JsonSerializer.Deserialize<UserInfo>(jsonData);
+        
+        if (user == null)
+        {
+            throw new InvalidOperationException("The JSON file does not contain a valid UserInfo object.");
+        }
+        
+        var result = await userInfoService.CreateUserAsync(user);
+
+        if (result.IsSuccess)
+        {
+            UserInfo userInfo = result.GetValueOrDefault();
+            Console.WriteLine("User created successfully!");
+            Console.WriteLine($"ID: {userInfo.UserId}, Name: {userInfo.FirstName} {userInfo.LastName}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to create user. Validation errors:");
+            var error = result.GetErrorOrDefault();
+            Console.WriteLine($"Error occurred: {error}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred: {ex.Message}");
+    }
+}).WithDescription("Create a new user from a local JSON file.");
+
 
 app.Run();

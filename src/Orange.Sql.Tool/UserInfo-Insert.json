@@ -1,0 +1,9 @@
+{
+  "EmployeeNum": "JD999990",
+  "FirstName": "John",
+  "LastName": "Doe",
+  "Email": "john.doe@example.com",
+  "CreatedBy": "admin",
+  "UtcCreatedAt": "2024-12-31T22:06:00Z",
+  "IsEnabled": true
+}

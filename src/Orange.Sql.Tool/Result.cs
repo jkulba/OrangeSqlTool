@@ -28,4 +28,7 @@ public readonly struct Result<TValue, TError>
     
     public TResult Match<TResult>(Func<TValue, TResult> success, Func<TError, TResult> failure) =>
         !IsError ? success(_value!) : failure(_error!);
+    
+    public TValue GetValueOrDefault(TValue defaultValue = default!) => IsError ? defaultValue : _value!;
+    public TError GetErrorOrDefault(TError defaultError = default!) => IsError ? _error! : defaultError;
 }

@@ -1,16 +1,20 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Orange.Sql.Tool.Users;
 
 public record UserInfo
 {
-    public Guid UserId { get; set; }
-    public required string EmployeeNum { get; set; }
-    public required string FirstName { get; set; }
-    public required string LastName { get; set; }
-    public string? Email { get; set; }
-    public DateTime UtcCreatedAt { get; set; }
-    public string? CreatedBy { get; set; }
-    public DateTime UtcUpdatedAt { get; set; }
-    public string? UpdatedBy { get; set; }
-    public bool IsEnabled { get; set; }
+    public Guid UserId { get; init; }
+    
+    [Required]
+    public required string EmployeeNum { get; init; } = default!;
+    public string FirstName { get; init; } = default!;
+    public string LastName { get; init; } = default!;
+    public string Email { get; init; } = default!;
+    public DateTime UtcCreatedAt { get; init; }
+    public string? CreatedBy { get; init; }
+    public DateTime UtcUpdatedAt { get; init; }
+    public string? UpdatedBy { get; init; }
+    public bool IsEnabled { get; init; }
 }
 
