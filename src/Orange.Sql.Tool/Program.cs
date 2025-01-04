@@ -31,7 +31,7 @@ builder.Services.AddScoped<IValidator<UserInfo>, UserInfoValidator>();
 var app = builder.Build();
 
 // app.AddCommand("create", () => Console.WriteLine("Creating a new user...")).WithDescription("Create a new UserInfo");
-app.AddCommand("get",  async (Guid userId, IUserInfoService userInfoService) =>
+app.AddCommand("get", async (Guid userId, IUserInfoService userInfoService) =>
 {
     var user = await userInfoService.GetUserByIdAsync(userId);
     if (user == null)
@@ -44,7 +44,7 @@ app.AddCommand("get",  async (Guid userId, IUserInfoService userInfoService) =>
         var table = ConsoleTable.From<UserInfo>([user]);
         Console.WriteLine(table);
     }
-    
+
 }).WithDescription("Get UserInfo by Id");
 
 app.AddCommand("list-by-date-created", async (IUserInfoService userInfoService, SortDirection sort) =>
@@ -80,15 +80,15 @@ app.AddCommand("create-from-file", async (string filePath, IUserInfoService user
         {
             throw new FileNotFoundException($"The file '{filePath}' was not found.");
         }
-        
-        var jsonData = File.ReadAllText(filePath); 
+
+        var jsonData = File.ReadAllText(filePath);
         var user = JsonSerializer.Deserialize<UserInfo>(jsonData);
-        
+
         if (user == null)
         {
             throw new InvalidOperationException("The JSON file does not contain a valid UserInfo object.");
         }
-        
+
         var result = await userInfoService.CreateUserAsync(user);
 
         if (result.IsSuccess)
@@ -100,8 +100,8 @@ app.AddCommand("create-from-file", async (string filePath, IUserInfoService user
         else
         {
             Console.WriteLine("Failed to create user:");
-            var error = result.GetErrorOrDefault();
-            Console.WriteLine($"Error occurred: {error.ToString()}");
+            var error = result.GetValueOrDefault();
+            Console.WriteLine($"Error occurred: {error?.ToString() ?? "Unknown error"}");
         }
     }
     catch (Exception ex)
@@ -118,15 +118,15 @@ app.AddCommand("update-from-file", async (string filePath, IUserInfoService user
         {
             throw new FileNotFoundException($"The file '{filePath}' was not found.");
         }
-        
-        var jsonData = File.ReadAllText(filePath); 
+
+        var jsonData = File.ReadAllText(filePath);
         var user = JsonSerializer.Deserialize<UserInfo>(jsonData);
-        
+
         if (user == null)
         {
             throw new InvalidOperationException("The JSON file does not contain a valid UserInfo object.");
         }
-        
+
         var result = await userInfoService.UpdateUserAsync(user);
 
         if (result.IsSuccess)
@@ -139,8 +139,8 @@ app.AddCommand("update-from-file", async (string filePath, IUserInfoService user
         else
         {
             Console.WriteLine("Failed to create user:");
-            var error = result.GetErrorOrDefault();
-            Console.WriteLine($"Error occurred: {error.ToString()}");
+            var error = result.GetValueOrDefault();
+            Console.WriteLine($"Error occurred: {error?.ToString() ?? "Unknown error"}");
         }
     }
     catch (Exception ex)
